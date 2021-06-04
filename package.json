@@ -1,7 +1,7 @@
 {
   "name": "consumeter-webserver",
   "version": "0.0.1",
-  "description": "consumeter-webserver initialised with create-express-typescript-application.",
+  "description": "the webserver for the consumeter server",
   "main": "src/index.ts",
   "scripts": {
     "build": "tsc",
