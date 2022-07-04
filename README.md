@@ -22,3 +22,9 @@
   - `create database consumeter;`
   - `create user consumer with encrypted password 'PASSWORD';`
   - `grant all privileges on database consumeter to consumer;`
+
+
+- Postgres commands:
+  - `\l` list all databases
+  - `\c database` connects to database
+  - `\dt` display tables in a database
