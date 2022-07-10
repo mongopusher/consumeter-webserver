@@ -6,6 +6,10 @@ import { CreateUserDto } from '@webserver/dto/createUser.dto';
 import { sign } from 'jsonwebtoken';
 import { JWT_SECRET } from '@webserver/config';
 import { IUserResponse } from '@webserver/types/user-response.interface';
+import { TUser } from '@webserver/types/user.type';
+import { LoginUserDto } from '@webserver/dto/loginUser.dto';
+import { UserUtils } from '@webserver/user/user.utils';
+import { compare } from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -15,11 +19,13 @@ export class UserService {
   ) {
   }
 
-  public async getAllUsers(): Promise<Array<UserEntity>> {
+  public async getAll(): Promise<Array<UserEntity>> {
     return await this.userRepository.find();
   }
 
-  public async createUser(createUserDto: CreateUserDto): Promise<UserEntity> {
+  public async create(createUserDto: CreateUserDto): Promise<UserEntity> {
+
+    //TODO: keine sonderzeichen im namen, nur maximal 32 zeichen lang bitte
     const userByEmail = await this.userRepository.findOneBy({
       email: createUserDto.email,
     });
@@ -40,7 +46,41 @@ export class UserService {
     return await this.userRepository.save(newUser);
   }
 
-  public buildCreateUserResponse(user: UserEntity): IUserResponse {
+  public async login(loginUserDto: LoginUserDto): Promise<UserEntity> {
+    let user;
+    if (UserUtils.isEmailAddress(loginUserDto.usernameOrEmail) === true) {
+      user = await this.userRepository.findOneBy({
+        email: loginUserDto.usernameOrEmail,
+      });
+    } else {
+      user = await this.userRepository.findOneBy({
+        username: loginUserDto.usernameOrEmail,
+      });
+    }
+
+    if (user === null) {
+      throw new HttpException(
+        `User or email ${loginUserDto.usernameOrEmail} does not exist`,
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    const isPasswordCorrect = await compare(
+      loginUserDto.password,
+      user.password,
+    );
+
+    if (isPasswordCorrect === false) {
+      throw new HttpException(
+        `Password for ${loginUserDto.usernameOrEmail} is wrong`,
+        HttpStatus.UNAUTHORIZED,
+      );
+    }
+
+    return user;
+  }
+
+  public buildUserResponse(user: UserEntity): IUserResponse {
     return {
       user: {
         username: user.username,
