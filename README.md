@@ -22,12 +22,11 @@
   - `create database consumeter;`
   - `create user consumer with encrypted password 'PASSWORD';`
   - `grant all privileges on database consumeter to consumer;`
-  
 - <h3>(Re-)initiate the database:</h2>
   - `npx nps db.clean`
 
-
 <h2>Useful commands: </h2>
+
 - Postgres:
   - `\l` list all databases
   - `\c database` connects to database
