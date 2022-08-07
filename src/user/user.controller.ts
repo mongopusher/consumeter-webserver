@@ -1,22 +1,28 @@
-import { Body, Controller, Get, Inject, Post, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Get, Inject, Post, Put, Req, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { UserService } from '@webserver/user/user.service';
 import { UserEntity } from '@webserver/user/user.entity';
-import { CreateUserDto } from '@webserver/dto/createUser.dto';
-import { IUserResponse } from '@webserver/types/user-response.interface';
-import { LoginUserDto } from '@webserver/dto/loginUser.dto';
+import { CreateUserDto } from '@webserver/user/dto/createUser.dto';
+import { IUserResponse } from '@webserver/user/types/user-response.interface';
+import { LoginUserDto } from '@webserver/user/dto/loginUser.dto';
+import { IExpressRequest } from '@webserver/types/express-request.interface';
+import { UpdateUserDto } from '@webserver/user/dto/updateUser.dto';
+import { User } from '@webserver/user/decorators/user.decorator';
+import { AuthGuard } from '@webserver/user/guards/auth.guard';
+import { AdminGuard } from '@webserver/user/guards/admin.guard';
 
-@Controller('/users')
+@Controller('')
 export class UserController {
   public constructor(
     @Inject(UserService) private readonly userService: UserService,
   ) {}
 
-  @Get()
+  @Get('/users')
+  @UseGuards(AdminGuard)
   public async getAll(): Promise<Array<UserEntity>> {
     return await this.userService.getAll();
   }
 
-  @Post('/create')
+  @Post('/create-user')
   @UsePipes(new ValidationPipe())
   public async create(
     @Body('user') createUserDto: CreateUserDto,
@@ -32,6 +38,27 @@ export class UserController {
   ): Promise<IUserResponse> {
     const user = await this.userService.login(loginUserDto);
 
+    return this.userService.buildUserResponse(user);
+  }
+
+  @Put('/update-user')
+  @UsePipes(new ValidationPipe())
+  @UseGuards(AuthGuard)
+  public async updateUser(
+    @Body('user') updateUserDto: UpdateUserDto,
+    @User('id') userId: number,
+  ): Promise<IUserResponse> {
+    const user = await this.userService.updateUser(userId, updateUserDto);
+
+    const response = this.userService.buildUserResponse(user);
+    return response;
+  }
+
+  @Get('/user')
+  @UseGuards(AuthGuard)
+  public async getCurrentUser(
+    @User() user: UserEntity,
+  ): Promise<IUserResponse> {
     return this.userService.buildUserResponse(user);
   }
 }

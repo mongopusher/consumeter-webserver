@@ -1,23 +1,22 @@
 import { HttpException, HttpStatus, Injectable } from '@nestjs/common';
 import { UserEntity } from '@webserver/user/user.entity';
-import { Repository } from 'typeorm';
+import { FindOneOptions, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
-import { CreateUserDto } from '@webserver/dto/createUser.dto';
+import { CreateUserDto } from '@webserver/user/dto/createUser.dto';
 import { sign } from 'jsonwebtoken';
 import { JWT_SECRET } from '@webserver/config';
-import { IUserResponse } from '@webserver/types/user-response.interface';
-import { TUser } from '@webserver/types/user.type';
-import { LoginUserDto } from '@webserver/dto/loginUser.dto';
+import { IUserResponse } from '@webserver/user/types/user-response.interface';
+import { LoginUserDto } from '@webserver/user/dto/loginUser.dto';
 import { UserUtils } from '@webserver/user/user.utils';
 import { compare } from 'bcrypt';
+import { UpdateUserDto } from '@webserver/user/dto/updateUser.dto';
 
 @Injectable()
 export class UserService {
   public constructor(
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
-  ) {
-  }
+  ) {}
 
   public async getAll(): Promise<Array<UserEntity>> {
     return await this.userRepository.find();
@@ -42,19 +41,24 @@ export class UserService {
 
     const newUser = new UserEntity();
     Object.assign(newUser, createUserDto);
-    console.log({ newUser });
     return await this.userRepository.save(newUser);
   }
 
   public async login(loginUserDto: LoginUserDto): Promise<UserEntity> {
     let user;
     if (UserUtils.isEmailAddress(loginUserDto.usernameOrEmail) === true) {
-      user = await this.userRepository.findOneBy({
-        email: loginUserDto.usernameOrEmail,
+      user = await this.userRepository.findOne({
+        select: ['id', 'email', 'username', 'password'],
+        where: {
+          email: loginUserDto.usernameOrEmail,
+        },
       });
     } else {
-      user = await this.userRepository.findOneBy({
-        username: loginUserDto.usernameOrEmail,
+      user = await this.userRepository.findOne({
+        select: ['id', 'email', 'username', 'password'],
+        where: {
+          username: loginUserDto.usernameOrEmail,
+        },
       });
     }
 
@@ -80,6 +84,69 @@ export class UserService {
     return user;
   }
 
+  public async updateUser(
+    currentUserId: number,
+    updateUserDto: UpdateUserDto,
+  ): Promise<UserEntity> {
+    const user = await this.getById(currentUserId, true);
+
+    const username = updateUserDto.username ?? user.username;
+    const email = updateUserDto.email ?? user.email;
+
+    if (updateUserDto.username !== undefined) {
+      const possibleDuplicateByUsername = await this.userRepository.findOneBy({
+        id: Not(currentUserId),
+        username,
+      });
+
+      if (possibleDuplicateByUsername !== null) {
+        throw new HttpException(`Username is already taken!`, HttpStatus.BAD_REQUEST);
+      }
+    }
+
+    if (updateUserDto.email !== undefined) {
+      const possibleDuplicateByEmail = await this.userRepository.findOneBy({
+        id: Not(currentUserId),
+        email,
+      });
+      if (possibleDuplicateByEmail !== null) {
+        throw new HttpException('Email is already taken!', HttpStatus.BAD_REQUEST);
+      }
+    }
+
+    const isPasswordCorrect = await compare(
+      updateUserDto.password,
+      user.password,
+    );
+
+    if (isPasswordCorrect === false) {
+      throw new HttpException(`Password is wrong`, HttpStatus.UNAUTHORIZED);
+    }
+
+    Object.assign(user, { email, username });
+    const updateResult = await this.userRepository.update({ id: currentUserId }, { username, email });
+    if (updateResult.affected !== 1) {
+      console.error('Always should be 1 row on updateUser! Actual affected: ', updateResult.affected);
+    }
+
+    return await this.getById(currentUserId);
+  }
+
+  public async getById(
+    id: number,
+    withPassword = false,
+  ): Promise<UserEntity | null> {
+    if (id === undefined || id === null) {
+      return null;
+    }
+
+    const searchOptions: FindOneOptions = withPassword
+      ? { where: { id }, select: ['username', 'password', 'email'] }
+      : { where: { id } };
+
+    return await this.userRepository.findOne(searchOptions);
+  }
+
   public buildUserResponse(user: UserEntity): IUserResponse {
     return {
       user: {
@@ -99,6 +166,7 @@ export class UserService {
         email: user.email,
       },
       JWT_SECRET,
+      { expiresIn: '1d' },
     );
   }
 }
