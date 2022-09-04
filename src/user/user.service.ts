@@ -23,7 +23,6 @@ export class UserService {
   }
 
   public async create(createUserDto: CreateUserDto): Promise<UserEntity> {
-
     //TODO: keine sonderzeichen im namen, nur maximal 32 zeichen lang bitte
     const userByEmail = await this.userRepository.findOneBy({
       email: createUserDto.email,
@@ -100,7 +99,10 @@ export class UserService {
       });
 
       if (possibleDuplicateByUsername !== null) {
-        throw new HttpException(`Username is already taken!`, HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          'Username is already taken!',
+          HttpStatus.BAD_REQUEST,
+        );
       }
     }
 
@@ -110,7 +112,10 @@ export class UserService {
         email,
       });
       if (possibleDuplicateByEmail !== null) {
-        throw new HttpException('Email is already taken!', HttpStatus.BAD_REQUEST);
+        throw new HttpException(
+          'Email is already taken!',
+          HttpStatus.BAD_REQUEST,
+        );
       }
     }
 
@@ -124,9 +129,15 @@ export class UserService {
     }
 
     Object.assign(user, { email, username });
-    const updateResult = await this.userRepository.update({ id: currentUserId }, { username, email });
+    const updateResult = await this.userRepository.update(
+      { id: currentUserId },
+      { username, email },
+    );
     if (updateResult.affected !== 1) {
-      console.error('Always should be 1 row on updateUser! Actual affected: ', updateResult.affected);
+      console.error(
+        'Always should be 1 row on updateUser! Actual affected: ',
+        updateResult.affected,
+      );
     }
 
     return await this.getById(currentUserId);
