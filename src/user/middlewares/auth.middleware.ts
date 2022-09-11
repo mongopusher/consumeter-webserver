@@ -1,8 +1,7 @@
-import { Inject, Injectable, NestMiddleware } from '@nestjs/common';
+import { Injectable, NestMiddleware } from '@nestjs/common';
 import { Response, NextFunction } from 'express';
 import { IExpressRequest } from '@webserver/types/express-request.interface';
 import { JsonWebTokenError, TokenExpiredError, verify } from 'jsonwebtoken';
-import { JWT_SECRET } from '@webserver/config';
 import { UserService } from '@webserver/user/user.service';
 import * as fs from 'fs';
 

@@ -4,7 +4,6 @@ import { FindOneOptions, Not, Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { CreateUserDto } from '@webserver/user/dto/createUser.dto';
 import { sign } from 'jsonwebtoken';
-import { JWT_SECRET } from '@webserver/config';
 import { IUserResponse } from '@webserver/user/types/user-response.interface';
 import { LoginUserDto } from '@webserver/user/dto/loginUser.dto';
 import { UserUtils } from '@webserver/user/user.utils';
@@ -167,6 +166,7 @@ export class UserService {
         email: user.email,
         id: user.id,
         token,
+        expiresIn: 86400,
       },
     };
   }
