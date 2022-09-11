@@ -10,6 +10,7 @@ import { LoginUserDto } from '@webserver/user/dto/loginUser.dto';
 import { UserUtils } from '@webserver/user/user.utils';
 import { compare } from 'bcrypt';
 import { UpdateUserDto } from '@webserver/user/dto/updateUser.dto';
+import * as fs from 'fs';
 
 @Injectable()
 export class UserService {
@@ -158,26 +159,37 @@ export class UserService {
     return await this.userRepository.findOne(searchOptions);
   }
 
-  public buildUserResponse(user: UserEntity): IUserResponse {
+  public async buildUserResponse(user: UserEntity): Promise<IUserResponse> {
+    const token = await this.generateJwt(user);
     return {
       user: {
         username: user.username,
         email: user.email,
         id: user.id,
-        token: this.generateJwt(user),
+        token,
       },
     };
   }
 
-  private generateJwt(user: UserEntity): string {
+  private async generateJwt(user: UserEntity): Promise<string> {
+    let RS256Secret;
+    try {
+      RS256Secret = await fs.promises.readFile('./resources/private.key');
+    } catch (e) {
+      console.error('Error while reading rs256 secret: ', e);
+      throw new HttpException('Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
+    }
     return sign(
       {
         id: user.id,
         username: user.username,
         email: user.email,
       },
-      JWT_SECRET,
-      { expiresIn: '1d' },
+      RS256Secret,
+      {
+        algorithm: 'RS256',
+        expiresIn: '1d',
+      },
     );
   }
 }

@@ -29,7 +29,7 @@ export class UserController {
   ): Promise<IUserResponse> {
     const user = await this.userService.create(createUserDto);
 
-    return this.userService.buildUserResponse(user);
+    return await this.userService.buildUserResponse(user);
   }
 
   @Post('/login')
@@ -38,7 +38,7 @@ export class UserController {
   ): Promise<IUserResponse> {
     const user = await this.userService.login(loginUserDto);
 
-    return this.userService.buildUserResponse(user);
+    return await this.userService.buildUserResponse(user);
   }
 
   @Put('/update-user')
@@ -50,8 +50,7 @@ export class UserController {
   ): Promise<IUserResponse> {
     const user = await this.userService.updateUser(userId, updateUserDto);
 
-    const response = this.userService.buildUserResponse(user);
-    return response;
+    return await this.userService.buildUserResponse(user);
   }
 
   @Get('/user')
@@ -59,6 +58,6 @@ export class UserController {
   public async getCurrentUser(
     @User() user: UserEntity,
   ): Promise<IUserResponse> {
-    return this.userService.buildUserResponse(user);
+    return await this.userService.buildUserResponse(user);
   }
 }

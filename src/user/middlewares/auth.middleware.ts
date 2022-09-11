@@ -4,6 +4,7 @@ import { IExpressRequest } from '@webserver/types/express-request.interface';
 import { JsonWebTokenError, TokenExpiredError, verify } from 'jsonwebtoken';
 import { JWT_SECRET } from '@webserver/config';
 import { UserService } from '@webserver/user/user.service';
+import * as fs from 'fs';
 
 @Injectable()
 export class AuthMiddleware implements NestMiddleware {
@@ -21,8 +22,16 @@ export class AuthMiddleware implements NestMiddleware {
     }
 
     const token = req.headers.authorization.split(' ')[1];
+
+    let publicRS256Key;
     try {
-      const decoded = verify(token, JWT_SECRET) as any;
+      publicRS256Key = await fs.promises.readFile('./resources/public.key');
+    } catch (e) {
+      console.error(`Error while reading public key!`, e);
+    }
+
+    try {
+      const decoded = verify(token, publicRS256Key, { algorithms: ['RS256'] }) as any;
       req.user = await this.userService.getById(decoded.id);
       next();
     } catch (error) {

@@ -31,3 +31,10 @@
   - `\l` list all databases
   - `\c database` connects to database
   - `\dt` display tables in a database
+
+- Authorization:
+  - you need to generate a pair of rsa keys and store them in ./resources
+  - you can generate a pair of keys with openssl like this:
+  - `openssl genrsa -out private.key 4096`
+  - `openssl rsa -in private.key -outform PEM -pubout -out public.key`
+  - Note: the **private.key** file should never be part of your projects source but instead should be at a protected location on your server
