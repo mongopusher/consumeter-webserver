@@ -177,7 +177,10 @@ export class UserService {
       RS256Secret = await fs.promises.readFile('./resources/private.key');
     } catch (e) {
       console.error('Error while reading rs256 secret: ', e);
-      throw new HttpException('Internal Server Error', HttpStatus.INTERNAL_SERVER_ERROR);
+      throw new HttpException(
+        'Internal Server Error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
     return sign(
       {
