@@ -2,5 +2,8 @@
   "extends": "./tsconfig.json",
   "exclude": [
     "consumeter-webserver/node_modules",
-    "test", "dist", "**/*spec.ts"]
+    "test", "dist", "**/*spec.ts"],
+  "compilerOptions": {
+    "esModuleInterop": true
+  }
 }
