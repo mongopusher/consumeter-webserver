@@ -6,11 +6,14 @@ if (!process.env.IS_TS_NODE) {
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from '@webserver/app.module';
 import * as fs from 'fs';
+import * as dotenv from 'dotenv'; // see https://github.com/motdotla/dotenv#how-do-i-use-dotenv-with-import
 
 async function bootstrap() {
+  dotenv.config();
+
   const httpsOptions = {
-    key: fs.readFileSync('./dist/private-key.pem'),
-    cert: fs.readFileSync('./dist/public-certificate.pem'),
+    key: fs.readFileSync(process.env.SSL_KEY_PATH),
+    cert: fs.readFileSync(process.env.SSL_CERTIFICATE_PATH),
   };
 
   const app = await NestFactory.create(AppModule, {
@@ -26,7 +29,7 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
-  await app.listen(443);
+  await app.listen(process.env.HTTPS_PORT);
 }
 
 bootstrap();
