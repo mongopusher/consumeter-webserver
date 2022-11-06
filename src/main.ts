@@ -9,8 +9,8 @@ import * as fs from 'fs';
 
 async function bootstrap() {
   const httpsOptions = {
-    key: fs.readFileSync('../secrets/private-key.pem'),
-    cert: fs.readFileSync('../secrets/public-certificate.pem'),
+    key: fs.readFileSync('./dist/private-key.pem'),
+    cert: fs.readFileSync('./dist/public-certificate.pem'),
   };
 
   const app = await NestFactory.create(AppModule, {
@@ -26,7 +26,7 @@ async function bootstrap() {
       whitelist: true,
     }),
   );
-  await app.listen(3000);
+  await app.listen(443);
 }
 
 bootstrap();
